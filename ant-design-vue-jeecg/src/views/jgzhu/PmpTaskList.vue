@@ -41,32 +41,59 @@
         @expand="handleExpand"
         v-bind="tableProps"
       >
-        <template slot="projectname" slot-scope="text,record">
-          <a href="javascript:;" @click="handleEditTaskDetail(record)">{{text}}</a>
+        <template slot="taskname" slot-scope="text,record">
+          <a href="javascript:;" @click="myHandleDetailEdit(record)">{{text}}</a>
         </template>
         <span slot="isdelete" slot-scope="text">
           <a-tag :color="text==1 ? 'volcano' : 'green'">{{ text == 0 ? '正常':'禁用'}}</a-tag>
         </span>
         <span slot="action" slot-scope="text, record">
-          <a @click="handleEdit(record)">编辑</a>
+          <a @click="myHandleTaskEdit(record)">编辑</a>
           <a-divider type="vertical" />
-          <a-popconfirm title="确定删除吗?" @confirm="() => handleDelete(record.id)">
-            <a>删除</a>
-          </a-popconfirm>
+          <a-dropdown>
+            <a class="ant-dropdown-link">
+              更多
+              <a-icon type="down" />
+            </a>
+            <a-menu slot="overlay">
+              <a-menu-item>
+                <a href="javascript:;" @click="handleDetail1(record)">详情</a>
+              </a-menu-item>
+              <a-menu-item>
+                <a href="javascript:;" @click="handleComment(record)">评论</a>
+              </a-menu-item>
+              <a-menu-item>
+                <a-popconfirm
+                  v-if="record.isdelete==0"
+                  title="确定禁用吗?"
+                  @confirm="() => handleDisable(record)"
+                >
+                  <a>禁用</a>
+                </a-popconfirm>
+                <a-popconfirm v-else title="确定启用吗?" @confirm="() => handleEnable(record)">
+                  <a>启用</a>
+                </a-popconfirm>
+              </a-menu-item>
+            </a-menu>
+          </a-dropdown>
         </span>
       </a-table>
     </div>
-
     <pmpTaskList-modal ref="modalForm" @ok="modalFormOk"></pmpTaskList-modal>
-    <pmpTaskdetails-modal ref="modalForm1" @ok="modalFormOk"></pmpTaskdetails-modal>
+    <pmpTaskdetails-modal ref="modalForm1" @ok="modalFormOk1"></pmpTaskdetails-modal>
+    <!-- <pmpComment-modal ref="modalForm2" @ok="modalFormOk2"></pmpComment-modal> -->
   </a-card>
 </template>
 
 <script>
+import Vue from 'vue'
 import { getAction } from '@/api/manage'
 import { JeecgListMixin } from '@/mixins/JeecgListMixin'
 import PmpTaskListModal from './modules/PmpTaskListModal'
 import PmpTaskdetailsModal from './modules/PmpTaskdetailsModal'
+// import PmpCommentModal from '@views/wqc/modules/PmpCommentModal'
+import { USER_NAME } from '@/store/mutation-types'
+import { isContainPrincipal } from '@/utils/util';
 
 export default {
   name: 'SysCategoryList',
@@ -77,14 +104,15 @@ export default {
   },
   data() {
     return {
+      username: '',
       description: '任务管理页面',
       // 表头
       columns: [
         {
           title: '名称',
           align: 'left',
-          dataIndex: 'projectname',
-          scopedSlots: { customRender: 'projectname' }
+          dataIndex: 'taskname',
+          scopedSlots: { customRender: 'taskname' }
         },
         {
           title: '负责人',
@@ -133,14 +161,20 @@ export default {
         childList: '/protree/pmpProject/childList',
         delete: '/protree/pmpProject/delete',
         deleteBatch: '/protree/pmpProject/deleteBatch',
+        disable: '/protree/pmpProject/disable',
+        enable: '/protree/pmpProject/enable',
         exportXlsUrl: '/protree/pmpProject/exportXls',
-        importExcelUrl: 'protree/pmpProject/importExcel'
+        importExcelUrl: 'protree/pmpProject/importExcel',
+        isSuperior: 'protree/pmpProject/isSuperior'
       },
       expandedRowKeys: [],
       hasChildrenField: 'haschild',
       pidField: 'parentnode',
       dictOptions: {}
     }
+  },
+  created() {
+    this.username = Vue.ls.get(USER_NAME)
   },
   computed: {
     importExcelUrl() {
@@ -158,13 +192,75 @@ export default {
     }
   },
   methods: {
+    openNotification(title, des) {
+      this.$notification.open({
+        message: title,
+        description: des,
+        icon: <a-icon type="frown" style="color: red" />
+      })
+    },
+    handleComment: function(record) {
+      if (record.isdelete == '0') {
+        let params = {
+          id: record.id,
+          principal: this.username
+        }
+        getAction(this.url.isSuperior, params).then(res => {
+          if (res.success) {
+            this.$refs.modalForm2.show(record)
+            // callback()
+          } else {
+            this.openNotification('提示', '权限不够哦,无法评论！')
+            // callback(res.message)
+          }
+        })
+      } else {
+        this.openNotification('提示', '已禁用,无法评论！')
+      }
+    },
+    handleDetail1: function(record) {
+      this.$refs.modalForm1.edit(record)
+      this.$refs.modalForm1.title = '详情'
+      this.$refs.modalForm1.disableSubmit = true
+    },
+    myHandleTaskEdit(record) {
+      if (record.isdelete == '0') {
+        if (record.createBy == this.username) {
+          this.$refs.modalForm.edit(record)
+          this.$refs.modalForm.title = '编辑'
+          this.$refs.modalForm.disableSubmit = false
+        } else {
+          this.openNotification('提示', '权限不够哦！禁止编辑！')
+        }
+      } else {
+        this.openNotification('提示', '已禁用,无法编辑！')
+      }
+    },
+    myHandleDetailEdit(record) {
+      if (record.isdelete == '0') {
+        if (record.createBy == this.username || isContainPrincipal(record.principal,this.username)) {
+          this.$refs.modalForm1.edit(record)
+          this.$refs.modalForm1.title = '编辑'
+          this.$refs.modalForm1.disableSubmit = false
+        } else {
+          this.openNotification('提示', '权限不够哦,禁止编辑！')
+        }
+      } else {
+        this.openNotification('提示', '已禁用,无法编辑！')
+      }
+    },
     loadData(arg) {
       if (arg == 1) {
         this.ipagination.current = 1
       }
       this.loading = true
       this.expandedRowKeys = []
-      let params = this.getQueryParams()
+      let params = {
+        field: this.getQueryField(),
+        pid: this.$route.query.data.id,
+        pageNo: this.ipagination.current,
+        pageSize: this.ipagination.pageSize
+      }
       return new Promise(resolve => {
         getAction(this.url.list, params).then(res => {
           if (res.success) {
@@ -231,6 +327,14 @@ export default {
         this.dataSource = [...this.dataSource]
       }
     },
+    modalFormOk1(formData, arr) {
+      if (!formData.id) {
+        this.addOk(formData, arr)
+      } else {
+        this.editOk(formData, this.dataSource)
+        this.dataSource = [...this.dataSource]
+      }
+    },
     editOk(formData, arr) {
       if (arr && arr.length > 0) {
         for (let i = 0; i < arr.length; i++) {
@@ -262,7 +366,7 @@ export default {
         let params = this.getQueryParams() //查询条件
         params[this.pidField] = nodeId
         getAction(this.url.childList, params).then(res => {
-          console.log('11111', res)
+          //console.log('11111', res)
           if (res.success) {
             if (res.result && res.result.length > 0) {
               row.children = this.getDataByResult(res.result)
