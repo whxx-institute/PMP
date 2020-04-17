@@ -78,7 +78,7 @@
               <a-icon type="down" />
             </a>
             <a-menu slot="overlay">
-              <a-menu-item>
+              <a-menu-item v-show="record.parentnode!=0">
                 <a href="javascript:;" @click="handleDetail1(record)">详情</a>
               </a-menu-item>
               <a-menu-item v-show="record.parentnode!=0">
@@ -294,19 +294,20 @@ export default {
     },
     handleComment: function(record) {
       if (record.isdelete == '0') {
-        let params = {
-          id: record.id,
-          principal: this.username
-        }
-        getAction(this.url.isSuperior, params).then(res => {
-          if (res.success) {
-            this.$refs.modalForm2.show(record)
-            // callback()
-          } else {
-            this.openNotification('提示', '权限不够哦,无法评论！')
-            // callback(res.message)
-          }
-        })
+         this.$refs.modalForm2.show(record)
+        // let params = {
+        //   id: record.id,
+        //   principal: this.username
+        // }
+        // getAction(this.url.isSuperior, params).then(res => {
+        //   if (res.success) {
+        //     this.$refs.modalForm2.show(record)
+        //     // callback()
+        //   } else {
+        //     this.openNotification('提示', '权限不够哦,无法评论！')
+        //     // callback(res.message)
+        //   }
+        // })
       } else {
         this.openNotification('提示', '已禁用,无法评论！')
       }
@@ -331,6 +332,7 @@ export default {
     //   }
     // },
     handleDetail1: function(record) {
+      console.log("record",record)
       this.$refs.modalForm1.edit(record)
       this.$refs.modalForm1.title = '详情'
       this.$refs.modalForm1.disableSubmit = true

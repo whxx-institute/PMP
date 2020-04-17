@@ -42,5 +42,7 @@ public interface IPmpProjectService extends IService<PmpProject> {
     List<PmpProjectTreeModel> queryTreeList(String projectName);
 
     //甘特图
-    List<Map<String, Object>> ganttList();
+    List<Map<String, Object>> ganttList(String projectname, String projecttype, String startyear, String startmonth, String status,String[] principal);
+    //年份
+    List<Map<String, Object>> getListYear();
 }

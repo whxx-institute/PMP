@@ -36,5 +36,7 @@ public interface PmpProjectMapper extends BaseMapper<PmpProject> {
     public List<PmpProject>  getCountInfo();
 
     //甘特图
-    List<Map<String, Object>> ganttList();
+    List<Map<String, Object>> ganttList(@Param("projectname") String projectname, @Param("projecttype") String projecttype, @Param("startyear") String startyear, @Param("startmonth") String startmonth, @Param("status") String status, @Param("principal") String[] principal);
+    //年份
+    List<Map<String, Object>> getListYear();
 }

@@ -49,9 +49,41 @@
 	</select>
 
 	<select id="ganttList" resultType="map">
-	SELECT top 30 *,DATEDIFF(DAY,startdate,enddate) as duration ,
-		(CASE WHEN parentnode ='0' THEN 'NULL' else parentnode  END ) as parentId
+		SELECT *,DATEDIFF(DAY,startdate,enddate)+1 as duration ,
+		(CASE WHEN parentnode ='0' THEN 'NULL' else parentnode END ) as parentId
 		FROM [XiangMuGuanLi].[dbo].[pmp_project]
 		where isdelete='0'
+		and CONVERT(varchar(4), startdate, 23)=#{startyear}
+		<if test="startmonth !=null and  startmonth !='' ">
+			and CONVERT(varchar(7), startdate, 23)=#{startyear}+'-'+#{startmonth}
+		</if>
+		<if test="projectname !=null and  projectname !='' ">
+			and projectname like '%'+#{projectname}+'%'
+		</if>
+		<if test="projecttype !=null and  projecttype !='' ">
+			and projecttype =#{projecttype}
+		</if>
+		<if test="status !=null and  status !='' ">
+			and status =#{status}
+		</if>
+		<if test="principal !=null and  principal !='' ">
+			and (
+			<foreach collection="principal" index="index" item="items">
+				<if test="index==0">
+					principal like '%'+ #{items}+'%'
+				</if>
+				<if test="index!=0">
+					or principal like '%'+ #{items}+'%'
+				</if>
+			</foreach>
+			)
+		</if>
+	</select>
+
+	<select id="getListYear" resultType="map">
+SELECT
+distinct CONVERT(varchar(4), startdate, 23) as year
+FROM [XiangMuGuanLi].[dbo].[pmp_project]
+where CONVERT(varchar(7), startdate, 23) is not null
 	</select>
 </mapper>

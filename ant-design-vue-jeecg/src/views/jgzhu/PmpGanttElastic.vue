@@ -15,8 +15,32 @@
             </a-form-item>
           </a-col>
           <a-col :md="6" :sm="8">
-            <a-form-item label="起止日期">
-              <a-range-picker v-model="rangeDate" @change="onChange" />
+            <a-form-item label="日期">
+              年
+              <a-select
+                style="width: 120px"
+                v-model="queryParam.startyear"
+              >
+                <a-select-option
+                  v-for="(item,index) in yearp"
+                  :key="index"
+                  :value="item.year"
+                >{{item.year}}</a-select-option>
+              </a-select>&nbsp;&nbsp;&nbsp;月
+              <a-select style="width: 120px" allowClear v-model="queryParam.startmonth">
+                <a-select-option value="01">01</a-select-option>
+                <a-select-option value="02">02</a-select-option>
+                <a-select-option value="03">03</a-select-option>
+                <a-select-option value="04">04</a-select-option>
+                <a-select-option value="05">05</a-select-option>
+                <a-select-option value="06">06</a-select-option>
+                <a-select-option value="07">07</a-select-option>
+                <a-select-option value="08">08</a-select-option>
+                <a-select-option value="09">09</a-select-option>
+                <a-select-option value="10">10</a-select-option>
+                <a-select-option value="11">11</a-select-option>
+                <a-select-option value="12">12</a-select-option>
+              </a-select>
             </a-form-item>
           </a-col>
           <a-col :md="6" :sm="8">
@@ -50,25 +74,6 @@
         </a-row>
       </a-form>
     </div>
-    <!-- 操作按钮区域 -->
-    <div class="table-operator" style="text-align:right">
-      <!-- <a-button @click="handleAdd" icon="plus">添加任务</a-button> -->
-      <a-button type="primary" icon="download" @click="handleExportXls('分类字典')">导出</a-button>
-      <!-- <a-upload name="file" :showUploadList="false" :multiple="false" :action="importExcelUrl" @change="handleImportExcel">
-        <a-button type="primary" icon="import">导入</a-button>
-      </a-upload>-->
-      <!-- <a-dropdown v-if="selectedRowKeys.length > 0">
-        <a-menu slot="overlay">
-          <a-menu-item key="1" @click="batchDel">
-            <a-icon type="delete" />删除
-          </a-menu-item>
-        </a-menu>
-        <a-button style="margin-left: 8px">
-          批量操作
-          <a-icon type="down" />
-        </a-button>
-      </a-dropdown>-->
-    </div>
     <div>
       <pmp-gantt-elastic-model v-if="showGantt" :dataSource="tasks"></pmp-gantt-elastic-model>
     </div>
@@ -100,16 +105,6 @@ import JDate from '@/components/jeecg/JDate.vue'
 import { initDictOptions, filterDictText, myFilterMultiDictText } from '@/components/dict/JDictSelectUtil'
 import JSelectMultiUser from '@/components/jeecgbiz/JSelectMultiUser'
 import PmpGanttElasticModel from './modules/PmpGanttElasticModel'
-
-// just helper to get current dates
-function getDate(hours) {
-  const currentDate = new Date()
-  const currentYear = currentDate.getFullYear()
-  const currentMonth = currentDate.getMonth()
-  const currentDay = currentDate.getDate()
-  const timeStamp = new Date(currentYear, currentMonth, currentDay, 0, 0, 0).getTime()
-  return new Date(timeStamp + hours * 60 * 60 * 1000).getTime()
-}
 
 const finishStyle = {
   base: {
@@ -151,6 +146,7 @@ export default {
   },
   data() {
     return {
+      yearp: [],
       //字典数组缓存-负责人
       principal: [],
       projectTypeDictOptions: [],
@@ -162,66 +158,40 @@ export default {
       undoingStyle,
       tasks: [],
       showGantt: false,
-      rangeDate: [moment().startOf('year'), moment(this.date)],
       url: {
-        list: '/protree/pmpProject/ganttList'
+        list: '/protree/pmpProject/ganttList',
+        listyaer: '/protree/pmpProject/getListYear'
       }
     }
   },
   created() {
-    //初始化字典 - 创建人
-    initDictOptions('sys_user,realname,username').then(res => {
-      if (res.success) {
-        this.principal = res.result
-      }
-    })
-    //初始化字典 - 项目类型
-    initDictOptions('task_type').then(res => {
-      if (res.success) {
-        this.taskTypeDictOptions = res.result
-        console.log(this.taskTypeDictOptions)
-      }
-    })
-    //初始化字典 - 项目类型
-    initDictOptions('project_type').then(res => {
-      if (res.success) {
-        this.projectTypeDictOptions = res.result
-      }
-    })
+    this.queryParam.startyear = new Date().getFullYear()
   },
   methods: {
-    // addTask() {
-    //   this.tasks.push({
-    //     id: this.lastId++,
-    //     label:
-    //       '<a href="https://images.pexels.com/photos/423364/pexels-photo-423364.jpeg?auto=compress&cs=tinysrgb&h=650&w=940" target="_blank" style="color:#0077c0;">Yeaahh! you have added a task bro!</a>',
-    //     user:
-    //       '<a href="https://images.pexels.com/photos/423364/pexels-photo-423364.jpeg?auto=compress&cs=tinysrgb&h=650&w=940" target="_blank" style="color:#0077c0;">Awesome!</a>',
-    //     start: getDate(24 * 3),
-    //     duration: 1 * 24 * 60 * 60 * 1000,
-    //     percent: 50,
-    //     type: "project"
-    //   });
-    // },
-    initRangeDate() {
-      this.rangeDate = [moment().startOf('year'), moment(this.date)]
-    },
-    onChange(date, dateString) {
-      if (dateString[0].length < 2) {
-        this.initRangeDate()
-      }
-    },
-    searchQuery() {
-      this.queryParam.startdate = this.rangeDate[0].format('YYYY-MM-DD')
-      this.queryParam.enddate = this.rangeDate[1].format('YYYY-MM-DD')
-
-      this.loadData(1)
-    },
-    searchReset() {
-      this.initRangeDate()
-      this.queryParam = {}
-
-      this.searchQuery()
+    initDictConfig() {
+      //初始化字典 - 创建人
+      initDictOptions('sys_user,realname,username').then(res => {
+        if (res.success) {
+          this.principal = res.result
+        }
+      })
+      //初始化字典 - 项目类型
+      initDictOptions('task_type').then(res => {
+        if (res.success) {
+          this.taskTypeDictOptions = res.result
+        }
+      })
+      //初始化字典 - 项目类型
+      initDictOptions('project_type').then(res => {
+        if (res.success) {
+          this.projectTypeDictOptions = res.result
+        }
+      }),
+        getAction(this.url.listyaer).then(res => {
+          if (res.success) {
+            this.yearp = res.result
+          }
+        })
     },
     openNotification(title, des) {
       this.$notification.open({
@@ -230,13 +200,19 @@ export default {
         icon: <a-icon type="frown" style="color: red" />
       })
     },
+    //计算距离年末天数
+    dateDiff(sDate) {
+      var at = moment(sDate).format('YYYY-MM-DD')
+      var to = moment(sDate)
+        .endOf('year')
+        .format('YYYY-MM-DD')
+      return moment(to).diff(at, 'day') + 1
+    },
     loadData(arg) {
       if (!this.url.list) {
         this.$message.error('请设置url.list属性!')
         return
       }
-      this.queryParam.startdate = this.rangeDate[0].format('YYYY-MM-DD')
-      this.queryParam.enddate = this.rangeDate[1].format('YYYY-MM-DD')
       //加载数据 若传入参数1则加载第一页的内容
       if (arg === 1) {
         this.ipagination.current = 1
@@ -244,6 +220,7 @@ export default {
       var params = this.getQueryParams() //查询条件
       getAction(this.url.list, params).then(res => {
         if (res.success) {
+          this.tasks = []
           for (var i = 0; i < res.result.length; i++) {
             var preList = []
             var temp = {}
@@ -254,11 +231,29 @@ export default {
                 user: myFilterMultiDictText(this.principal, res.result[i].principal),
                 start:
                   res.result[i].startdate.length > 10 ? res.result[i].startdate.substr(0, 10) : res.result[i].startdate,
-                duration: res.result[i].duration * 24 * 60 * 60 * 1000,
+                duration:
+                  res.result[i].duration > 365
+                    ? this.dateDiff(res.result[i].startdate) * 24 * 60 * 60 * 1000
+                    : res.result[i].duration * 24 * 60 * 60 * 1000,
+                dayDuration: res.result[i].duration > 365 ? '>365' : res.result[i].duration,
                 percent: res.result[i].schedule,
-                projecttype: filterDictText(this.projectTypeDictOptions, res.result[i].projecttype),
+                realprojecttype: filterDictText(this.projectTypeDictOptions, res.result[i].projecttype),
                 type: 'project',
-                Status: res.result[i].status
+                Status: res.result[i].status,
+                photo: res.result[i].photo,
+                projectname: res.result[i].projectname,
+                taskname: res.result[i].taskname,
+                projecttype: res.result[i].projecttype,
+                projectcontent: res.result[i].projectcontent,
+                principal: res.result[i].principal,
+                participant: res.result[i].participant,
+                schedule: res.result[i].schedule,
+                startdate: res.result[i].startdate,
+                enddate: res.result[i].enddate,
+                emergencylevel: res.result[i].emergencylevel,
+                projectmoney: res.result[i].projectmoney,
+                remark: res.result[i].remark,
+                annex: res.result[i].annex
               }
             } else {
               temp = {
@@ -267,12 +262,30 @@ export default {
                 user: myFilterMultiDictText(this.principal, res.result[i].principal),
                 start:
                   res.result[i].startdate.length > 10 ? res.result[i].startdate.substr(0, 10) : res.result[i].startdate,
-                duration: res.result[i].duration * 24 * 60 * 60 * 1000,
+                duration:
+                  res.result[i].duration > 365
+                    ? this.dateDiff(res.result[i].startdate) * 24 * 60 * 60 * 1000
+                    : res.result[i].duration * 24 * 60 * 60 * 1000,
+                dayDuration: res.result[i].duration > 365 ? '>365' : res.result[i].duration,
                 percent: res.result[i].schedule,
-                projecttype: filterDictText(this.taskTypeDictOptions, res.result[i].projecttype),
+                realprojecttype: filterDictText(this.taskTypeDictOptions, res.result[i].projecttype),
                 Status: res.result[i].status,
                 type: 'task',
-                parentId: res.result[i].parentnode
+                parentId: res.result[i].parentId,
+                photo: res.result[i].photo,
+                projectname: res.result[i].projectname,
+                taskname: res.result[i].taskname,
+                projecttype: res.result[i].projecttype,
+                projectcontent: res.result[i].projectcontent,
+                principal: res.result[i].principal,
+                participant: res.result[i].participant,
+                schedule: res.result[i].schedule,
+                startdate: res.result[i].startdate,
+                enddate: res.result[i].enddate,
+                emergencylevel: res.result[i].emergencylevel,
+                projectmoney: res.result[i].projectmoney,
+                remark: res.result[i].remark,
+                annex: res.result[i].annex
               }
             }
             // if (res.result[i].PreTaskId != '') {

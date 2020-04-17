@@ -113,7 +113,12 @@ public class PmpProjectServiceImpl extends ServiceImpl<PmpProjectMapper, PmpProj
     }
 
     @Override
-    public List<Map<String, Object>> ganttList() {
-        return pmpProjectMapper.ganttList();
+    public List<Map<String, Object>> ganttList(String projectname, String projecttype, String startyear, String startmonth, String status, String[] principal) {
+        return pmpProjectMapper.ganttList(projectname,projecttype,startyear,startmonth,status,principal);
+    }
+
+    @Override
+    public List<Map<String, Object>> getListYear() {
+        return pmpProjectMapper.getListYear();
     }
 }
