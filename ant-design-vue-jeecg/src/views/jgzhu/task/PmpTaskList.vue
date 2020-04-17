@@ -392,19 +392,20 @@ export default {
     },
     handleComment: function(record) {
       if (record.isdelete == '0') {
-        let params = {
-          id: record.id,
-          principal: this.username
-        }
-        getAction(this.url.isSuperior, params).then(res => {
-          if (res.success) {
-            this.$refs.modalForm2.show(record)
-            // callback()
-          } else {
-            this.openNotification('提示', '权限不够哦,无法评论！')
-            // callback(res.message)
-          }
-        })
+        this.$refs.modalForm2.show(record)
+        // let params = {
+        //   id: record.id,
+        //   principal: this.username
+        // }
+        // getAction(this.url.isSuperior, params).then(res => {
+        //   if (res.success) {
+        //     this.$refs.modalForm2.show(record)
+        //     // callback()
+        //   } else {
+        //     this.openNotification('提示', '权限不够哦,无法评论！')
+        //     // callback(res.message)
+        //   }
+        // })
       } else {
         this.openNotification('提示', '已禁用,无法评论！')
       }

@@ -26,7 +26,7 @@
                 dictCode="task_type"
                 placeholder="请选择任务类型"
                 :disabled="disableSubmit"
-                :description="description"
+                :description="description1"
               />
             </a-col>
           </a-row>
@@ -185,7 +185,7 @@ export default {
   },
   data() {
     return {
-      description: '',
+      description1: '',
       disableSubmit: false,
       form: this.$form.createForm(this),
       title: '操作',

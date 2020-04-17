@@ -1,8 +1,15 @@
 <template>
-  <gantt-elastic :options="options" :tasks="dataSource" v-if="true">
-    <gantt-header slot="header"></gantt-header>
-  </gantt-elastic>
-  <!-- <a-button @click="addTask" icon="plus">Add task</a-button> -->
+  <div>
+    <gantt-elastic :options="options" :tasks="dataSource" :dynamic-style="dynamicStyle">
+      @tasks-changed="tasksUpdate"
+      @options-changed="optionsUpdate"
+      @dynamic-style-changed="styleUpdate"
+      <gantt-header slot="header"></gantt-header>
+    </gantt-elastic>
+    <pmpTaskdetails-modal ref="modalForm1"></pmpTaskdetails-modal>
+    <pmpCommentSummary-modal ref="csModal"></pmpCommentSummary-modal>
+    <pmpProjectManage-modal ref="modalForm2"></pmpProjectManage-modal>
+  </div>
 </template>
 
 <style>
@@ -13,20 +20,20 @@ import moment from 'moment'
 import GanttElastic from 'gantt-elastic'
 import GanttHeader from 'gantt-elastic-header'
 import dayjs from 'dayjs'
+import PmpTaskdetailsModal from '@views/jgzhu/project/modules/PmpTaskdetailsModal'
+import PmpCommentSummaryModal from '@views/wqc/modules/PmpCommentSummaryModal'
+import PmpProjectManageModal from '@views/jgzhu/project/modules/PmpProjectManageModal'
 
-let tasks = [
-  {
-    id: '0',
-    label: '无',
-    user: '无',
-    start: '2020-01-01',
-    duration: 0,
-    percent: 0,
-    type: 'project',
-    Status: '5'
-    //collapsed: true,
-  }
-]
+// just helper to get current dates
+function getDate(hours) {
+  const currentDate = new Date()
+  const currentYear = currentDate.getFullYear()
+  const currentMonth = currentDate.getMonth()
+  const currentDay = currentDate.getDate()
+  const timeStamp = new Date(currentYear, currentMonth, currentDay, 0, 0, 0).getTime()
+  return new Date(timeStamp + hours * 60 * 60 * 1000).getTime()
+}
+let that
 const options = {
   taskMapping: {
     progress: 'percent'
@@ -34,7 +41,7 @@ const options = {
   maxRows: 100,
   maxHeight: 700,
   title: {
-    label: 'Your project title as html (link or whatever...)',
+    label: 'pmp 甘特图',
     html: false
   },
   row: {
@@ -67,7 +74,11 @@ const options = {
         html: true,
         events: {
           click({ data, column }) {
-            alert('description clicked!n' + data.label)
+            if (data.type == 'task') {
+              that.handleDetail1(data)
+            } else {
+              that.handleDetail2(data)
+            }
           }
         }
       },
@@ -76,22 +87,75 @@ const options = {
         label: '负责人',
         value: 'user',
         width: 130,
-        html: true
-      },
-      {
-        id: 3,
-        label: '开始日期',
-        value: 'start',
-        width: 78
+        html: true,
+        style: {
+          'task-list-header-label': {
+            'text-align': 'center',
+            width: '100%'
+          },
+          'task-list-item-value-container': {
+            'text-align': 'center',
+            width: '100%'
+          }
+        },
+        events: {
+          click({ data, column }) {
+
+            that.handleCommentSummary(data)
+          }
+        }
       },
       {
         id: 4,
         label: '类型',
-        value: 'projecttype',
-        width: 68
+        value: 'realprojecttype',
+        width: 130,
+        html: true,
+        style: {
+          'task-list-header-label': {
+            'text-align': 'center',
+            width: '100%'
+          },
+          'task-list-item-value-container': {
+            'text-align': 'center',
+            width: '100%'
+          }
+        }
       },
       {
         id: 5,
+        label: '开始日期',
+        value: 'start',
+        width: 78,
+        style: {
+          'task-list-header-label': {
+            'text-align': 'center',
+            width: '100%'
+          },
+          'task-list-item-value-container': {
+            'text-align': 'center',
+            width: '100%'
+          }
+        }
+      },
+      {
+        id: 6,
+        label: '时长',
+        value: 'dayDuration',
+        width: 45,
+        style: {
+          'task-list-header-label': {
+            'text-align': 'center',
+            width: '100%'
+          },
+          'task-list-item-value-container': {
+            'text-align': 'center',
+            width: '100%'
+          }
+        }
+      },
+      {
+        id: 7,
         label: '%',
         value: 'progress',
         width: 35,
@@ -125,7 +189,10 @@ export default {
   name: 'PmpGanttElasticModel',
   components: {
     GanttElastic,
-    GanttHeader
+    GanttHeader,
+    PmpTaskdetailsModal,
+    PmpCommentSummaryModal,
+    PmpProjectManageModal
   },
   props: {
     dataSource: {
@@ -136,9 +203,43 @@ export default {
   data() {
     return {
       options,
-      dynamicStyle: {},
+      dynamicStyle: {
+        'task-list-header-label': {
+          'font-weight': 'bold'
+        }
+      }
     }
   },
-  methods: {}
+  mounted() {
+    that = this
+  },
+  methods: {
+    handleCommentSummary(record) {
+        this.$refs.csModal.edit(record)
+        this.$refs.csModal.disableSubmit = false
+        this.$refs.csModal.description = record.projecttype
+    },
+    handleDetail1: function(record) {
+      console.log('record', record)
+      this.$refs.modalForm1.edit(record)
+      this.$refs.modalForm1.title = '详情'
+      this.$refs.modalForm1.disableSubmit = true
+    },
+    handleDetail2: function(record) {
+      console.log('record', record)
+      this.$refs.modalForm2.edit(record)
+      this.$refs.modalForm2.title = '详情'
+      this.$refs.modalForm2.disableSubmit = true
+    },
+    tasksUpdate(tasks) {
+      this.dataSource = tasks
+    },
+    optionsUpdate(options) {
+      this.options = options
+    },
+    styleUpdate(style) {
+      this.dynamicStyle = style
+    }
+  }
 }
 </script>
