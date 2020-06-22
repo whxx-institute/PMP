@@ -22,7 +22,7 @@ export const JeecgListMixin = {
       ipagination: {
         current: 1,
         pageSize: 10,
-        pageSizeOptions: ['10', '30', '50','100'],
+        pageSizeOptions: ['10', '30', '50', '100'],
         showTotal: (total, range) => {
           return range[0] + "-" + range[1] + " 共" + total + "条"
         },
@@ -55,9 +55,9 @@ export const JeecgListMixin = {
     this.username = Vue.ls.get(USER_NAME);
     if (!this.disableMixinCreated) {
       console.log(' -- mixin created -- ')
-      this.loadData();
       //初始化字典配置 在自己页面定义
       this.initDictConfig();
+      this.loadData();
     }
   },
   methods: {

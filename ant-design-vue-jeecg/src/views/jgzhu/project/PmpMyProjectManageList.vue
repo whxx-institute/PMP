@@ -242,6 +242,7 @@ export default {
     return {
       proStatusVal: '负责的项目',
       description: '项目主表管理页面',
+       xyscroll:{ y: 500 },
       projectTypeDictOptions: [],
       principalDictOptions: [],
       searchText: '',

@@ -49,8 +49,23 @@ public class PmpProjectController extends JeecgController<PmpProject, IPmpProjec
 
 	 //甘特图
 	 @GetMapping(value = "/ganttList")
-	 public Result<?> ganttList(PmpProject pmpProject,  HttpServletRequest req) {
-		 List<Map<String, Object>> list =pmpProjectService.ganttList();
+	 public Result<?> ganttList(@RequestParam(name = "projectname", defaultValue = "") String projectname,
+								@RequestParam(name = "projecttype", defaultValue = "") String projecttype,
+								@RequestParam(name = "startyear", defaultValue = "2020") String startyear,
+								@RequestParam(name = "startmonth", defaultValue = "") String startmonth,
+								@RequestParam(name = "status", defaultValue = "") String status,
+								@RequestParam(name = "principal", defaultValue = "") String principal, HttpServletRequest req) {
+
+		 String[] pri = principal.split(",");
+		 List<Map<String, Object>> list = pmpProjectService.ganttList(projectname,projecttype,startyear,startmonth,status,pri);
+		 return Result.ok(list);
+	 }
+
+
+	 //年份
+	 @GetMapping(value = "/getListYear")
+	 public Result<?> getListYear(HttpServletRequest req) {
+		 List<Map<String, Object>> list = pmpProjectService.getListYear();
 		 return Result.ok(list);
 	 }
 

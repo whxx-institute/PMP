@@ -115,7 +115,7 @@
         :columns="columns"
         :dataSource="dataSource"
         :pagination="ipagination"
-        scroll="{ y: 500 }"
+        :scroll="xyscroll"
         :loading="loading"
         :rowSelection="{fixed:true,selectedRowKeys: selectedRowKeys, onChange: onSelectChange}"
         @change="handleTableChange"
@@ -211,6 +211,7 @@ export default {
   data() {
     return {
       description: '项目主表管理页面',
+      xyscroll:{ y: 500 },
       projectTypeDictOptions: [],
       principalDictOptions: [],
       // 表头
